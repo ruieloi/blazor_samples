@@ -105,20 +105,23 @@
             if (response.IsSuccessStatusCode)
             {
                 var statusId = await response.Content.ReadAsStringAsync();
-                //inform that employee creating is in progress
-
-                //check if employee is already created, if not inform user that it's in progress
 
 
+                //This next step is not ideally, we should:
+                // - inform the client that the system is processing
+                // - keep blocking the submit button and fields
+                // - save status information in a global place so the user can move away from the page and still get the status report
+                // - also we should have a timeout mechanism that informs the user something happend or to wait more time
+
+                //Code to simulate some waiting time and to call the check employee status
                 while(true)
                 {
                     await Task.Delay(10);
-                    var a = await EmployeeHttpClient.CheckEmployeeStatus(statusId);
-                    if(a)
+                    var isCompleted = await EmployeeHttpClient.CheckEmployeeStatus(statusId);
+                    if(isCompleted)
                     {
                         break;
                     }
-
                 }
 
                 NavigationManager.NavigateTo("");
