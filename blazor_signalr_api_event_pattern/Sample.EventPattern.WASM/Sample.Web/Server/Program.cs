@@ -1,11 +1,12 @@
 using Microsoft.AspNetCore.ResponseCompression;
-using Sample.Web.Server.Data;
 using Sample.Web.Server.Hubs;
+using Sample.Web.Server.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 
+builder.Services.AddMemoryCache();
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
 builder.Services.AddSignalR();
@@ -15,7 +16,14 @@ builder.Services.AddResponseCompression(opts =>
         new[] { "application/octet-stream" });
 });
 
-builder.Services.AddSingleton<IEmployeeStore>(x => new EmployeeStore());
+builder.Services.AddScoped<IEmployeeService, EmployeeService>();
+
+builder.Services.AddHttpClient(EmployeeService.HTTP_CLIENT_NAME, c =>
+{
+    c.BaseAddress = new Uri("http://localhost:7138/api/");
+    c.DefaultRequestHeaders.Add("Accept", "application/vnd.github.v3+json");
+    //add authorization etc
+});
 
 var app = builder.Build();
 

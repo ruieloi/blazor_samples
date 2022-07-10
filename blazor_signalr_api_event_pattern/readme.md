@@ -41,4 +41,7 @@ A code example to show how to use a Blazor WASM with a backend API using Event P
 
 * https://github.com/DaniJG/blazor-surveys - one good example of Blazor SignalR usage
 * https://github.com/bchavez/Bogus - great tool to create dummy data
+* https://visualstudiomagazine.com/articles/2021/01/06/blazor-lists.aspx
+* https://www.rahulpnath.com/blog/dependency-injection-in-azure-functions/
+* https://www.c-sharpcorner.com/article/routing-in-azure-function/
 

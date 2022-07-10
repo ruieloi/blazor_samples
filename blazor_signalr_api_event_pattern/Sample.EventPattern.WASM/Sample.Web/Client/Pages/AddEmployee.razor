@@ -75,13 +75,15 @@
     </div>
 
     <p>
-        <button type="submit" class="btn btn-primary float-right">Submit</button>
+        <button type="submit" class="btn btn-primary float-right" disabled="@blockSubmit">Submit</button>
     </p>
 </EditForm>
 
 @code {
     private AddEmployeeModel model = new AddEmployeeModel();
     private EditContext editContext;
+    private bool blockSubmit;
+
 
     protected override void OnInitialized()
     {
@@ -90,14 +92,28 @@
     }
     private async Task OnSubmit()
     {
+        if (blockSubmit)
+            return;
+
         // even though the server will validate the AddSurveyModel, check client side that the model is valid
         if (!editContext.Validate()) return;
 
+        blockSubmit = true;
         try
         {
             var response = await EmployeeHttpClient.AddEmployee(model);
             if (response.IsSuccessStatusCode)
             {
+                var statusId = await response.Content.ReadAsStringAsync();
+                //inform that employee creating is in progress
+
+                //check if employee is already created, if not inform user that it's in progress
+                
+                //create timer to check status
+
+
+
+
                 NavigationManager.NavigateTo("");
             }
             else
@@ -110,6 +126,10 @@
         catch (Exception ex)
         {
             Logger.LogError("Error: {Message}", ex.Message);
+        }
+        finally
+        {
+             blockSubmit = false;
         }
 
     }

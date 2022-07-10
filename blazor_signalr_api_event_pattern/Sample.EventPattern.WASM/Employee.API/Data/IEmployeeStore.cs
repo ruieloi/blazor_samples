@@ -1,10 +1,10 @@
 ﻿using Sample.Web.Shared;
 using System.Collections.Concurrent;
 
-namespace Sample.Web.Server.Data
+namespace Employee.API.Data
 {
     public interface IEmployeeStore
     {
-        ConcurrentBag<Employee> Employees { get; }
+        ConcurrentBag<Sample.Web.Shared.Employee> Employees { get; }
     }
 }

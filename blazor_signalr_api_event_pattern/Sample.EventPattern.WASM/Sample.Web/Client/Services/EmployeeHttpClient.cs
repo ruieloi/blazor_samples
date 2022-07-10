@@ -29,5 +29,10 @@ namespace Sample.Web.Client.Services
         {
             return await this.http.PutAsJsonAsync<AddEmployeeModel>("api/employee", employee);
         }
+
+        public async Task<string> CheckEmployeeStatus(string statusId)
+        {
+            return await this.http.GetStringAsync($"api/employee/status?{statusId}");
+        }
     }
 }

@@ -1,8 +1,8 @@
-using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.SignalR;
-using Sample.Web.Server.Data;
+using Microsoft.Extensions.Caching.Memory;
 using Sample.Web.Server.Hubs;
+using Sample.Web.Server.Services;
 using Sample.Web.Shared;
 
 namespace Sample.Web.Server.Controllers
@@ -12,24 +12,28 @@ namespace Sample.Web.Server.Controllers
     public class EmployeeController : ControllerBase
     {
         private readonly IHubContext<EmployeeHub, IEmployeeHub> _hubContext;
-        private readonly IEmployeeStore _employeeStore;
+        private readonly IMemoryCache _cache;
+        private readonly IEmployeeService _employeeService;
 
-        public EmployeeController(IHubContext<EmployeeHub, IEmployeeHub> employeeHub, IEmployeeStore employeeStore)
+        public EmployeeController(IHubContext<EmployeeHub, IEmployeeHub> employeeHub,
+                                    IMemoryCache cache,
+                                    IEmployeeService employeeService)
         {
             _hubContext = employeeHub;
-            _employeeStore = employeeStore;
+            _cache = cache;
+            _employeeService = employeeService;
         }
 
         [HttpGet()]
-        public IEnumerable<EmployeeSummary> GetEmployees()
+        public async Task<IEnumerable<EmployeeSummary>> GetEmployees()
         {
-            return _employeeStore.Employees.Select(s => s.ToSummary());
+           return await _employeeService.GetAll();
         }
 
         [HttpGet("{id}")]
-        public ActionResult GetEmployee(Guid id)
+        public async Task<ActionResult> GetEmployee(Guid id)
         {
-            var employee = _employeeStore.Employees.SingleOrDefault(t => t.Id == id);
+            var employee = await _employeeService.GetById(id);
             if (employee == null) return NotFound();
 
             return new JsonResult(employee);
@@ -38,7 +42,7 @@ namespace Sample.Web.Server.Controllers
         // Note an [ApiController] will automatically return a 400 response if any
         // of the data annotation valiadations defined in AddSurveyModel fails
         [HttpPut()]
-        public async Task<Employee> AddEmployee([FromBody] AddEmployeeModel addEmployeeModel)
+        public async Task<string> AddEmployee([FromBody] AddEmployeeModel addEmployeeModel)
         {
             var employee = new Employee
             {
@@ -49,10 +53,14 @@ namespace Sample.Web.Server.Controllers
                 IsTermContract = addEmployeeModel.IsTermContract
             };
 
-            _employeeStore.Employees.Add(employee);
+            var durableResponse = await _employeeService.Create(employee);
 
-            await _hubContext.Clients.All.EmployeeAdded(employee.ToSummary());
-            return employee;
+            //don't send internal links to the outside
+            //store the links in API and send only the Id
+            _cache.Set(durableResponse.id, durableResponse);
+                       
+           // await _hubContext.Clients.All.EmployeeAdded(employee.ToSummary());
+            return durableResponse.id;
         }
     }
 }
