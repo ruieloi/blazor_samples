@@ -1,0 +1,53 @@
+﻿@page "/employee/{Id:guid}/details"
+@using Microsoft.AspNetCore.SignalR.Client
+@using Sample.Web.Shared
+@using Sample.Web.Client.Services
+@inject EmployeeHttpClient EmployeeHttpClient
+@inject HubConnection HubConnection
+@implements IAsyncDisposable
+
+@if (employee is null){
+  <p><em>Loading...</em></p>
+} else {
+  <h1 class="mb-4">@employee.FullName</h1>
+
+  <p>Gender: @employee.Gender.ToString()</p>
+   
+}
+
+@code {
+    [Parameter]
+    public Guid Id { get; set; }
+    private Employee employee;
+    protected override async Task OnInitializedAsync()
+    {
+        employee = await EmployeeHttpClient.GetEmployee(Id);
+
+        // TODO: error handling, for example connection with server lost
+        await HubConnection.InvokeAsync("JoinEmployeeGroup", Id);
+
+        HubConnection.On<Employee>("EmployeeUpdated", employee =>
+        {
+            this.employee = employee;
+            StateHasChanged();
+        });
+
+
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        HubConnection.Remove("EmployeeUpdated");
+        // TODO: error handling, for example connection with server lost
+        await HubConnection.InvokeAsync("LeaveEmployeeGroup", Id);
+    }
+
+    //private async Task OnAnswer(string option)
+    //{
+    //    if (((IExpirable)survey).IsExpired) return;
+
+    //    await SurveyHttpClient.AnswerSurvey(Id, new SurveyAnswer{
+    //      Option = option
+    //    });
+    //}
+}
