@@ -56,7 +56,7 @@ namespace Employee.API
 
         [FunctionName("SendEmployeeSavedEvent")]
         public async Task<string> SendEmployeeSavedEvent([ActivityTrigger] Sample.Web.Shared.Employee employee,
-            [SignalR(ConnectionStringSetting = "AzureSignalRConnectionString", HubName = "employeeHub")] IAsyncCollector<SignalRMessage> signalRMessages,
+            [SignalR(HubName = "employeeHub")] IAsyncCollector<SignalRMessage> signalRMessages,
             ILogger log)
         {
             if (employee is null)
