@@ -27,12 +27,14 @@ namespace Sample.Web.Client.Services
 
         public async Task<HttpResponseMessage> AddEmployee(AddEmployeeModel employee)
         {
-            return await this.http.PutAsJsonAsync<AddEmployeeModel>("api/employee", employee);
+            return await this.http.PutAsJsonAsync("api/employee", employee);
         }
 
-        public async Task<string> CheckEmployeeStatus(string statusId)
+        public async Task<bool> CheckEmployeeStatus(string statusId)
         {
-            return await this.http.GetStringAsync($"api/employee/status?{statusId}");
+            var response = await this.http.GetStringAsync($"api/employee/status/{statusId}");
+            bool.TryParse(response, out var result);
+            return result;
         }
     }
 }

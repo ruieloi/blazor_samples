@@ -1,6 +1,6 @@
-# Smaple.EventPattern.WASM
+# Smaple.PoolingPattern.WASM
 
-A code example to show how to use a Blazor WASM with a backend API using Event Pattern
+A code example to show how to use a Blazor WASM with a backend API using Pooling Pattern
 
 
 ## How to setup in your machine

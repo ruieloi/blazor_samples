@@ -1,7 +1,4 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.SignalR;
-using Microsoft.Extensions.Caching.Memory;
-using Sample.Web.Server.Hubs;
 using Sample.Web.Server.Services;
 using Sample.Web.Shared;
 
@@ -11,23 +8,17 @@ namespace Sample.Web.Server.Controllers
     [Route("api/[controller]")]
     public class EmployeeController : ControllerBase
     {
-        private readonly IHubContext<EmployeeHub, IEmployeeHub> _hubContext;
-        private readonly IMemoryCache _cache;
         private readonly IEmployeeService _employeeService;
 
-        public EmployeeController(IHubContext<EmployeeHub, IEmployeeHub> employeeHub,
-                                    IMemoryCache cache,
-                                    IEmployeeService employeeService)
+        public EmployeeController(IEmployeeService employeeService)
         {
-            _hubContext = employeeHub;
-            _cache = cache;
             _employeeService = employeeService;
         }
 
         [HttpGet()]
         public async Task<IEnumerable<EmployeeSummary>> GetEmployees()
         {
-           return await _employeeService.GetAll();
+            return await _employeeService.GetAll();
         }
 
         [HttpGet("{id}")]
@@ -38,6 +29,13 @@ namespace Sample.Web.Server.Controllers
 
             return new JsonResult(employee);
         }
+
+        [HttpGet("status/{statusId}")]
+        public async Task<bool> CheckStatus(string statusId)
+        {
+            return await _employeeService.CheckStatus(statusId);
+        }
+
 
         // Note an [ApiController] will automatically return a 400 response if any
         // of the data annotation valiadations defined in AddSurveyModel fails
@@ -53,14 +51,7 @@ namespace Sample.Web.Server.Controllers
                 IsTermContract = addEmployeeModel.IsTermContract
             };
 
-            var durableResponse = await _employeeService.Create(employee);
-
-            //don't send internal links to the outside
-            //store the links in API and send only the Id
-            _cache.Set(durableResponse.id, durableResponse);
-                       
-           // await _hubContext.Clients.All.EmployeeAdded(employee.ToSummary());
-            return durableResponse.id;
+            return await _employeeService.Create(employee);
         }
     }
 }

@@ -108,11 +108,18 @@
                 //inform that employee creating is in progress
 
                 //check if employee is already created, if not inform user that it's in progress
-                
-                //create timer to check status
 
 
+                while(true)
+                {
+                    await Task.Delay(10);
+                    var a = await EmployeeHttpClient.CheckEmployeeStatus(statusId);
+                    if(a)
+                    {
+                        break;
+                    }
 
+                }
 
                 NavigationManager.NavigateTo("");
             }
