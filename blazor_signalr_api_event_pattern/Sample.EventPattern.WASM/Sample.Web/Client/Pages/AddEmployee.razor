@@ -1,0 +1,129 @@
+﻿@page "/employee/add"
+@using Microsoft.AspNetCore.Components.Forms
+@using Microsoft.Extensions.Logging
+@using Sample.Web.Shared
+@using Sample.Web.Client.Services
+@inject EmployeeHttpClient EmployeeHttpClient
+@inject NavigationManager NavigationManager
+@inject ILogger<AddEmployee> Logger
+
+<EditForm EditContext="@editContext" OnSubmit="@OnSubmit">
+    @* Use the experimental ObjectGraphDataAnnotationsValidator which allows to validate complex nested models *@
+    @* <DataAnnotationsValidator /> *@
+    <ObjectGraphDataAnnotationsValidator />
+    <div class="@(editContext.GetValidationMessages().Any() ? "alert alert-danger pb-0" : "")">
+        <ValidationSummary />
+    </div>
+
+    <div class="form-group">
+        <label for="inputTitle">First name</label>
+        <InputText id="inputFirstName" class="form-control" @bind-Value="model.FirstName" />
+        @if (editContext.GetValidationMessages(() => model.FirstName).Any())
+        {
+            <div class="invalid-feedback">
+                @editContext.GetValidationMessages(() => model.FirstName).First()
+            </div>
+        }
+    </div>
+    <div class="form-group">
+        <label for="inputTitle">Family name</label>
+        <InputText id="inputFamilyName" class="form-control" @bind-Value="model.FamilyName" />
+        @if (editContext.GetValidationMessages(() => model.FamilyName).Any())
+        {
+            <div class="invalid-feedback">
+                @editContext.GetValidationMessages(() => model.FamilyName).First()
+            </div>
+        }
+    </div>
+
+    <div class="form-group">
+        <label for="inputTitle">Address</label>
+        <InputText id="inputAddress" class="form-control" @bind-Value="model.Address" />
+        @if (editContext.GetValidationMessages(() => model.Address).Any())
+        {
+            <div class="invalid-feedback">
+                @editContext.GetValidationMessages(() => model.Address).First()
+            </div>
+        }
+    </div>
+
+    <div class="form-group col-md-4">
+            <label for="inputTitle">IsTermContract: </label>
+            <InputCheckbox id="inputIsTermContract" @bind-Value="model.IsTermContract" />
+            @if (editContext.GetValidationMessages(() => model.IsTermContract).Any())
+            {
+                <div class="invalid-feedback">
+                    @editContext.GetValidationMessages(() => model.IsTermContract).First()
+                </div>
+            }
+        </div>
+
+    <div class="form-group">
+        <label for="inputTitle">Gender</label>
+        <InputSelect id="inputGender" class="form-control" @bind-Value="model.Gender">
+            @foreach (var gender in Enum.GetValues(typeof(Gender)))
+            {
+                <option value="@gender">@gender</option>
+            }
+        </InputSelect>
+        @if (editContext.GetValidationMessages(() => model.Gender).Any())
+        {
+            <div class="invalid-feedback">
+                @editContext.GetValidationMessages(() => model.Gender).First()
+            </div>
+        }
+    </div>
+
+    <p>
+        <button type="submit" class="btn btn-primary float-right">Submit</button>
+    </p>
+</EditForm>
+
+@code {
+    private AddEmployeeModel model = new AddEmployeeModel();
+    private EditContext editContext;
+
+    protected override void OnInitialized()
+    {
+        editContext = new EditContext(model);
+        editContext.SetFieldCssClassProvider(new BootstrapFieldClassProvider());
+    }
+    private async Task OnSubmit()
+    {
+        // even though the server will validate the AddSurveyModel, check client side that the model is valid
+        if (!editContext.Validate()) return;
+
+        try
+        {
+            var response = await EmployeeHttpClient.AddEmployee(model);
+            if (response.IsSuccessStatusCode)
+            {
+                NavigationManager.NavigateTo("");
+            }
+            else
+            {
+                // TODO! check if received a Bad status request
+                // and if so, show the errors returned from the server in the alert box
+                // See: https://docs.microsoft.com/en-us/aspnet/core/blazor/forms-validation?view=aspnetcore-5.0#server-validation
+            }
+        }
+        catch (Exception ex)
+        {
+            Logger.LogError("Error: {Message}", ex.Message);
+        }
+
+    }
+
+    // This class lets us modify the CSS class that will be added to the input elements
+    // when the properties they are bound to are invalid
+    // This way we can add the "is-invalid" to the input elements
+    // See: https://docs.microsoft.com/en-us/aspnet/core/blazor/forms-validation?view=aspnetcore-5.0#custom-validation-class-attributes
+    private class BootstrapFieldClassProvider : FieldCssClassProvider
+    {
+        public override string GetFieldCssClass(EditContext editContext, in FieldIdentifier fieldIdentifier)
+        {
+            var isValid = !editContext.GetValidationMessages(fieldIdentifier).Any();
+            return isValid ? "" : "is-invalid";
+        }
+    }
+}

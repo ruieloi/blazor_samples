@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.ResponseCompression;
+using Sample.Web.Server.Data;
+using Sample.Web.Server.Hubs;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -6,6 +8,14 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllersWithViews();
 builder.Services.AddRazorPages();
+builder.Services.AddSignalR();
+builder.Services.AddResponseCompression(opts =>
+{
+    opts.MimeTypes = ResponseCompressionDefaults.MimeTypes.Concat(
+        new[] { "application/octet-stream" });
+});
+
+builder.Services.AddSingleton<IEmployeeStore>(x => new EmployeeStore());
 
 var app = builder.Build();
 
@@ -28,9 +38,9 @@ app.UseStaticFiles();
 
 app.UseRouting();
 
-
 app.MapRazorPages();
 app.MapControllers();
+app.MapHub<EmployeeHub>("/employeeHub");
 app.MapFallbackToFile("index.html");
 
 app.Run();

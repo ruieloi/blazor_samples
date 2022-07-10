@@ -1,9 +1,69 @@
 ﻿@page "/"
+@using Microsoft.AspNetCore.SignalR.Client
+@using Sample.Web.Shared
+@using Sample.Web.Client.Services
+@inject EmployeeHttpClient EmployeeHttpClient
+@inject NavigationManager NavigationManager
+@inject HubConnection HubConnection
+@implements IDisposable
 
-<PageTitle>Index</PageTitle>
+<PageTitle>Employee List</PageTitle>
 
-<h1>Hello, world!</h1>
+<h1>Employee List</h1>
 
-Welcome to your new app.
+To add a employee click on "Add Employee" on the left navigator
 
-<SurveyPrompt Title="How is Blazor working for you?" />
+@if (employees == null)
+{
+    <p><em>Loading...</em></p>
+}
+else
+{
+    <Virtualize Items="@employees.OrderBy(s => s.Name).ToList()" OverscanCount="6">
+        <ItemContent>
+            <span>
+                <em>@context.Name</em>  <button class="btn btn-link pl-0" @onclick="@(() => GoToEmployee(@context.Id))">View</button>
+
+                <hr />
+            </span>
+        </ItemContent>
+        <Placeholder>
+            <p>
+                Loading...Please wait.
+            </p>
+        </Placeholder>
+    </Virtualize>
+}
+
+@code {
+    private EmployeeSummary[] employees;
+    private string connId;
+    protected override async Task OnInitializedAsync()
+    {
+        employees = await EmployeeHttpClient.GetEmployees();
+        HubConnection.On<EmployeeSummary>("EmployeeAdded", employee =>
+        {
+            employees = employees
+                .Where(s => s.Name != employee.Name)
+                .Append(employee)
+                .ToArray();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        HubConnection.Remove("EmployeeAdded");
+    }
+
+    private void AddEmployee()
+    {
+        NavigationManager.NavigateTo("employee/add");
+    }
+
+    private void GoToEmployee(Guid employeeId)
+    {
+        NavigationManager.NavigateTo($"employee/{employeeId}/details");
+    }
+
+}
